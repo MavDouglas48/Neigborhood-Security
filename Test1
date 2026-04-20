@@ -48,19 +48,13 @@ public class NeighborhoodSafetyApp {
     // ================= ABSTRACT CLASS =================
     static abstract class Post {
         private String location;
-        private LocalDateTime createdAt;
 
         public Post(String location) {
             this.location = location;
-            this.createdAt = LocalDateTime.now();
         }
 
         public String getLocation() {
             return location;
-        }
-
-        public boolean matchesLocation(String loc) {
-            return location.equalsIgnoreCase(loc);
         }
 
         public abstract void display();
@@ -90,14 +84,19 @@ public class NeighborhoodSafetyApp {
         resolved = true;
     }
 
+    public boolean isResolved() {
+        return resolved;
+    }
+
     @Override
     public void display() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-        System.out.println("\n[ALERT" + (resolved ? " - RESOLVED" : "") + "]");
+        System.out.println("\n[ALERT]");
         System.out.println("Location: " + getLocation());
         System.out.println("Description: " + description);
         System.out.println("Severity: " + severity);
         System.out.println("Ends: " + endTime.format(formatter));
+        System.out.println("Status: " + (resolved ? "Resolved" : "Unresolved")); // Add status
     }
 
     @Override
@@ -119,47 +118,49 @@ public class NeighborhoodSafetyApp {
 }
 
 // ================= EMERGENCY ALERT SUBCLASS =================
-static class EmergencyAlert extends Alert {
-    private String emergencyType;
+    static class EmergencyAlert extends Alert {
+        private String emergencyType;
 
-    public EmergencyAlert(String location, String desc, int duration, AlertSeverity severity, String type) {
-        super(location, desc, duration, severity);
-        this.emergencyType = type;
-    }
-
-    @Override
-    public void display() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-        System.out.println("\n[EMERGENCY ALERT]");
-        System.out.println("Location: " + getLocation());
-        System.out.println("Description: " + description);
-        System.out.println("Severity: " + severity);
-        System.out.println("Ends: " + endTime.format(formatter));
-        System.out.println("Type: " + emergencyType);
-    }
-
-    @Override
-    public String serialize() {
-        return "EMERGENCY|" + getLocation() + "|" + description + "|" + endTime + "|" + severity + "|" + emergencyType;
-    }
-
-    public static EmergencyAlert deserialize(String[] data) {
-        if (data.length < 6) { // Ensure the data has at least 6 parts
-            System.out.println("Invalid emergency alert data: " + Arrays.toString(data));
-            return null;
+        public EmergencyAlert(String location, String desc, int duration, AlertSeverity severity, String type) {
+            super(location, desc, duration, severity);
+            this.emergencyType = type;
         }
-    
-        EmergencyAlert e = new EmergencyAlert(
-                data[1],
-                data[2],
-                1,
-                AlertSeverity.valueOf(data[4]),
-                data[5]
-        );
-        e.endTime = LocalDateTime.parse(data[3]);
-        return e;
+
+        @Override
+        public void display() {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
+            System.out.println("\n[EMERGENCY ALERT]");
+            System.out.println("Location: " + getLocation());
+            System.out.println("Description: " + description);
+            System.out.println("Severity: " + severity);
+            System.out.println("Ends: " + endTime.format(formatter));
+            System.out.println("Type: " + emergencyType);
+            System.out.println("Status: " + (isResolved() ? "Resolved" : "Unresolved")); // Use getter
+        }
+
+        @Override
+        public String serialize() {
+            return "EMERGENCY|" + getLocation() + "|" + description + "|" + endTime + "|" + severity + "|" + emergencyType;
+        }
+
+        public static EmergencyAlert deserialize(String[] data) {
+            if (data.length < 6) { // Ensure the data has at least 6 parts
+                System.out.println("Invalid emergency alert data: " + Arrays.toString(data));
+                return null;
+            }
+        
+            EmergencyAlert e = new EmergencyAlert(
+                    data[1],
+                    data[2],
+                    1,
+                    AlertSeverity.valueOf(data[4]),
+                    data[5]
+            );
+            e.endTime = LocalDateTime.parse(data[3]);
+            return e;
+        }
+        
     }
-}
     // ================= TIP CLASS =================
     static class Tip extends Post {
         private String message;
