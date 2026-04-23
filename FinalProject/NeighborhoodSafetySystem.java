@@ -1,17 +1,15 @@
+package FinalProject;
 import java.io.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-public class NeighborhoodSafetyApp {
-
+public class NeighborhoodSafetySystem {
     static Scanner scanner = new Scanner(System.in);
     static List<Post> posts = new ArrayList<>();
-    static final String FILE_NAME = "data.txt";
-
+    static final String FILE_NAME = "FinalProject/data.txt";
     public static void main(String[] args) {
         loadData();
-    
+
         while (true) {
             System.out.println("\n==== Neighborhood Safety Menu ====");
             System.out.println("1. Enter Alert");
@@ -23,9 +21,9 @@ public class NeighborhoodSafetyApp {
             System.out.println("7. View Tips");
             System.out.println("8. Search Posts");
             System.out.println("9. Exit");
-    
+
             int choice = getInt();
-    
+
             switch (choice) {
                 case 1 -> createAlert();
                 case 2 -> viewAlerts();
@@ -44,173 +42,19 @@ public class NeighborhoodSafetyApp {
             }
         }
     }
-
-    // ================= ABSTRACT CLASS =================
-    static abstract class Post {
-        private String location;
-
-        public Post(String location) {
-            this.location = location;
-        }
-
-        public String getLocation() {
-            return location;
-        }
-
-        public abstract void display();
-        public abstract String serialize();
-    }
-
-    // ================= ENUM =================
-    enum AlertSeverity {
-        LOW, MEDIUM, HIGH
-    }
-
-   // ================= ALERT BASE CLASS =================
-   static class Alert extends Post {
-    protected String description;
-    protected LocalDateTime endTime;
-    protected AlertSeverity severity;
-    private boolean resolved = false; // New field
-
-    public Alert(String location, String description, int duration, AlertSeverity severity) {
-        super(location);
-        this.description = description;
-        this.endTime = LocalDateTime.now().plusHours(duration);
-        this.severity = severity;
-    }
-
-    public void markAsResolved() {
-        resolved = true;
-    }
-
-    public boolean isResolved() {
-        return resolved;
-    }
-
-    @Override
-    public void display() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-        System.out.println("\n[ALERT]");
-        System.out.println("Location: " + getLocation());
-        System.out.println("Description: " + description);
-        System.out.println("Severity: " + severity);
-        System.out.println("Ends: " + endTime.format(formatter));
-        System.out.println("Status: " + (resolved ? "Resolved" : "Unresolved")); // Add status
-    }
-
-    @Override
-    public String serialize() {
-        return "ALERT|" + getLocation() + "|" + description + "|" + endTime + "|" + severity + "|" + resolved;
-    }
-
-    public static Alert deserialize(String[] data) {
-        if (data.length < 6) { // Ensure the data has at least 6 parts
-            System.out.println("Invalid alert data: " + Arrays.toString(data));
-            return null;
-        }
-    
-        Alert a = new Alert(data[1], data[2], 1, AlertSeverity.valueOf(data[4]));
-        a.endTime = LocalDateTime.parse(data[3]);
-        a.resolved = Boolean.parseBoolean(data[5]); // Deserialize resolved status
-        return a;
-    }
-}
-
-// ================= EMERGENCY ALERT SUBCLASS =================
-    static class EmergencyAlert extends Alert {
-        private String emergencyType;
-
-        public EmergencyAlert(String location, String desc, int duration, AlertSeverity severity, String type) {
-            super(location, desc, duration, severity);
-            this.emergencyType = type;
-        }
-
-        @Override
-        public void display() {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-            System.out.println("\n[EMERGENCY ALERT]");
-            System.out.println("Location: " + getLocation());
-            System.out.println("Description: " + description);
-            System.out.println("Severity: " + severity);
-            System.out.println("Ends: " + endTime.format(formatter));
-            System.out.println("Type: " + emergencyType);
-            System.out.println("Status: " + (isResolved() ? "Resolved" : "Unresolved")); // Use getter
-        }
-
-        @Override
-        public String serialize() {
-            return "EMERGENCY|" + getLocation() + "|" + description + "|" + endTime + "|" + severity + "|" + emergencyType;
-        }
-
-        public static EmergencyAlert deserialize(String[] data) {
-            if (data.length < 6) { // Ensure the data has at least 6 parts
-                System.out.println("Invalid emergency alert data: " + Arrays.toString(data));
-                return null;
-            }
-        
-            EmergencyAlert e = new EmergencyAlert(
-                    data[1],
-                    data[2],
-                    1,
-                    AlertSeverity.valueOf(data[4]),
-                    data[5]
-            );
-            e.endTime = LocalDateTime.parse(data[3]);
-            return e;
-        }
-        
-    }
-    // ================= TIP CLASS =================
-    static class Tip extends Post {
-        private String message;
-
-        public Tip(String location, String message) {
-            super(location);
-            this.message = message;
-        }
-
-        @Override
-        public void display() {
-            System.out.println("\n[TIP]");
-            System.out.println("Location: " + getLocation());
-            System.out.println("Tip: " + message);
-        }
-
-        @Override
-        public String serialize() {
-            return "TIP|" + getLocation() + "|" + message;
-        }
-
-        public static Tip deserialize(String[] data) {
-            if (data.length < 3) { // Ensure the data has at least 3 parts
-                System.out.println("Invalid tip data: " + Arrays.toString(data));
-                return null;
-            }
-        
-            return new Tip(data[1], data[2]);
-        }
-    }
-
     // ================= MENU ACTIONS =================
-
     static void createAlert() {
         System.out.print("Enter location: ");
         String loc = scanner.nextLine();
-
         System.out.print("Description: ");
         String desc = scanner.nextLine();
-
         System.out.print("Duration (hours): ");
         int duration = getInt();
-
         System.out.println("Severity: 1=LOW, 2=MEDIUM, 3=HIGH");
         int s = getInt();
         AlertSeverity sev = AlertSeverity.values()[s - 1];
-
         System.out.println("Is this an emergency? (y/n)");
         String choice = scanner.nextLine();
-
         if (choice.equalsIgnoreCase("y")) {
             System.out.print("Enter emergency type: ");
             String type = scanner.nextLine();
@@ -218,10 +62,8 @@ public class NeighborhoodSafetyApp {
         } else {
             posts.add(new Alert(loc, desc, duration, sev));
         }
-
         System.out.println("Alert created.");
     }
-
     static void viewAlerts() {
         // Filter the list to only include unresolved alerts
         List<Alert> alerts = new ArrayList<>();
@@ -230,23 +72,22 @@ public class NeighborhoodSafetyApp {
                 alerts.add(alert);
             }
         }
-    
+
         // Sort alerts by severity (HIGH > MEDIUM > LOW)
         alerts.sort(Comparator.comparing((Alert a) -> a.severity).reversed());
-    
+
         // Check if there are no unresolved alerts
         if (alerts.isEmpty()) {
             System.out.println("\nNo unresolved alerts available to view.");
             return;
         }
-    
+
         // Display all unresolved alerts
         System.out.println("\n==== Unresolved Alerts ====");
         for (Post p : alerts) {
             p.display();
         }
     }
-
     static void viewResolvedAlerts() {
         // Filter the list to only include resolved alerts
         List<Alert> resolvedAlerts = new ArrayList<>();
@@ -255,28 +96,27 @@ public class NeighborhoodSafetyApp {
                 resolvedAlerts.add(alert);
             }
         }
-    
+
         // Check if there are no resolved alerts
         if (resolvedAlerts.isEmpty()) {
             System.out.println("\nNo resolved alerts available to view.");
             return;
         }
-    
+
         // Display all resolved alerts
         System.out.println("\n==== Resolved Alerts ====");
         for (Alert alert : resolvedAlerts) {
             alert.display();
         }
     }
-
     static void editAlert() {
         List<Alert> alerts = getAlerts();
-    
+
         if (alerts.isEmpty()) {
             System.out.println("No alerts available to edit.");
             return;
         }
-    
+
         System.out.println("\nAvailable Alerts:");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
         for (int i = 0; i < alerts.size(); i++) {
@@ -284,23 +124,23 @@ public class NeighborhoodSafetyApp {
             System.out.println(i + ": [Location: " + alert.getLocation() + ", Description: " + alert.description +
                     ", Severity: " + alert.severity + ", Ends: " + alert.endTime.format(formatter) + "]");
         }
-    
+
         System.out.print("\nEnter the number of the alert you want to edit: ");
         int index = getInt();
-    
+
         if (index >= 0 && index < alerts.size()) {
             Alert alertToEdit = alerts.get(index);
-    
+
             System.out.println("\nEditing Alert:");
             System.out.println("[Location: " + alertToEdit.getLocation() + ", Description: " + alertToEdit.description +
                     ", Severity: " + alertToEdit.severity + ", Ends: " + alertToEdit.endTime.format(formatter) + "]");
-    
+
             System.out.print("Enter new description (leave blank to keep current): ");
             String newDescription = scanner.nextLine();
             if (!newDescription.isBlank()) {
                 alertToEdit.description = newDescription;
             }
-    
+
             System.out.print("Enter new duration in hours (leave blank to keep current): ");
             String newDurationInput = scanner.nextLine();
             if (!newDurationInput.isBlank()) {
@@ -311,13 +151,12 @@ public class NeighborhoodSafetyApp {
                     System.out.println("Invalid duration. Keeping the current duration.");
                 }
             }
-    
+
             System.out.println("Alert updated successfully!");
         } else {
             System.out.println("Invalid selection. No alert was edited.");
         }
     }
-
     static List<Alert> getAlerts() {
         List<Alert> list = new ArrayList<>();
         for (Post p : posts) {
@@ -327,17 +166,13 @@ public class NeighborhoodSafetyApp {
         }
         return list;
     }
-
     static void createTip() {
         System.out.print("Location: ");
         String loc = scanner.nextLine();
-
         System.out.print("Tip: ");
         String tip = scanner.nextLine();
-
         posts.add(new Tip(loc, tip));
     }
-
     static void viewTips() {
         // Filter the list to only include tips
         List<Tip> tips = new ArrayList<>();
@@ -346,35 +181,34 @@ public class NeighborhoodSafetyApp {
                 tips.add((Tip) p);
             }
         }
-    
+
         // Check if there are no tips
         if (tips.isEmpty()) {
             System.out.println("\nNo tips available to view.");
             return;
         }
-    
+
         // Display all tips
         System.out.println("\n==== Tips ====");
         for (Tip tip : tips) {
             tip.display();
         }
     }
-
     static void searchPosts() {
         System.out.print("Enter location or keyword to search: ");
         String query = scanner.nextLine().toLowerCase();
-    
+
         List<Post> results = new ArrayList<>();
         for (Post p : posts) {
             if (p == null) continue; // Skip null objects
-    
-            if (p.getLocation().toLowerCase().contains(query) || 
-                (p instanceof Alert && ((Alert) p).description.toLowerCase().contains(query)) || 
+
+            if (p.getLocation().toLowerCase().contains(query) ||
+                (p instanceof Alert && ((Alert) p).description.toLowerCase().contains(query)) ||
                 (p instanceof Tip && ((Tip) p).message.toLowerCase().contains(query))) {
                 results.add(p);
             }
         }
-    
+
         if (results.isEmpty()) {
             System.out.println("\nNo posts found matching your search.");
         } else {
@@ -384,25 +218,20 @@ public class NeighborhoodSafetyApp {
             }
         }
     }
-
     static void markAlertAsResolved() {
         List<Alert> alerts = getAlerts();
-
         if (alerts.isEmpty()) {
             System.out.println("No alerts available to mark as resolved.");
             return;
         }
-
         System.out.println("\nAvailable Alerts:");
         for (int i = 0; i < alerts.size(); i++) {
             Alert alert = alerts.get(i);
             System.out.println(i + ": [Location: " + alert.getLocation() + ", Description: " + alert.description +
                     ", Severity: " + alert.severity + "]");
         }
-
         System.out.print("\nEnter the number of the alert to mark as resolved: ");
         int index = getInt();
-
         if (index >= 0 && index < alerts.size()) {
             Alert alertToResolve = alerts.get(index);
             alertToResolve.markAsResolved();
@@ -411,9 +240,7 @@ public class NeighborhoodSafetyApp {
             System.out.println("Invalid selection.");
         }
     }
-
     // ================= FILE =================
-
     static void saveData() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_NAME))) {
             for (Post p : posts) {
@@ -424,14 +251,13 @@ public class NeighborhoodSafetyApp {
             System.out.println("Error saving data to file.");
         }
     }
-
     static void loadData() {
         try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
             String line;
-    
+
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split("\\|");
-    
+
                 // Deserialize based on the prefix
                 Post post = null;
                 switch (parts[0]) {
@@ -439,7 +265,7 @@ public class NeighborhoodSafetyApp {
                     case "EMERGENCY" -> post = EmergencyAlert.deserialize(parts);
                     case "TIP" -> post = Tip.deserialize(parts);
                 }
-    
+
                 if (post != null) { // Only add valid posts
                     posts.add(post);
                 } else {
@@ -451,9 +277,7 @@ public class NeighborhoodSafetyApp {
             System.out.println("Error loading data from file.");
         }
     }
-
     // ================= UTIL =================
-
     static int getInt() {
         while (true) {
             try {
